@@ -1811,11 +1811,12 @@ nl_transact(int protocol, const struct ofpbuf *request,
         if (replyp) {
             *replyp = NULL;
         }
+        VLOG_INFO("Error calling nl_pool_alloc");
         return error;
     }
 
     error = nl_sock_transact(sock, request, replyp);
-
+    VLOG_INFO("Error calling nl_sock_transact");
     nl_pool_release(sock);
     return error;
 }
