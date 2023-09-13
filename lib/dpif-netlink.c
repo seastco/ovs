@@ -417,16 +417,19 @@ dpif_netlink_open(const struct dpif_class *class OVS_UNUSED, const char *name,
         dp_request.user_features |= OVS_DP_F_DISPATCH_UPCALL_PER_CPU;
         error = dpif_netlink_dp_transact(&dp_request, &dp, &buf);
         if (error == EOPNOTSUPP) {
+            VLOG_INFO("EOPNOTSUPP, defaulting to per-vport mode");
             dp_request.user_features &= ~OVS_DP_F_DISPATCH_UPCALL_PER_CPU;
             dp_request.user_features |= OVS_DP_F_VPORT_PIDS;
             error = dpif_netlink_dp_transact(&dp_request, &dp, &buf);
         }
         if (error) {
+            VLOG_INFO("dpif_netlink_dp_transact failed with some other error");
             return error;
         }
 
         error = open_dpif(&dp, dpifp);
         dpif_netlink_set_features(*dpifp, OVS_DP_F_TC_RECIRC_SHARING);
+        VLOG_INFO("Finished setting user features");
     } else {
         VLOG_INFO("Kernel does not correctly support feature negotiation. "
                   "Using standard features.");
@@ -5011,15 +5014,19 @@ dpif_netlink_dp_transact(const struct dpif_netlink_dp *request,
     ofpbuf_delete(request_buf);
 
     if (reply) {
+        VLOG_INFO("Received reply, calling dpif_netlink_dp_init");
         dpif_netlink_dp_init(reply);
         if (!error) {
+            VLOG_INFO("Calling dpif_netlink_dp_from_ofpbuf");
             error = dpif_netlink_dp_from_ofpbuf(reply, *bufp);
         }
         if (error) {
+            VLOG_INFO("Freeing bufp");
             ofpbuf_delete(*bufp);
             *bufp = NULL;
         }
     }
+    VLOG_INFO("Returning error");
     return error;
 }
 
